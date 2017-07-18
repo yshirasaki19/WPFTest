@@ -112,7 +112,6 @@
     <Compile Include="Models\AbstractTiffImage.cs" />
     <Compile Include="Models\LabelAttribute.cs" />
     <Compile Include="Models\ITiffImage.cs" />
-    <Compile Include="Models\Model.cs" />
     <Compile Include="Models\TiffImage.cs" />
     <Compile Include="ViewModels\MainWindowViewModel.cs" />
     <Compile Include="Views\MainWindow.xaml.cs">

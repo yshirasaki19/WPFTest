@@ -244,8 +244,8 @@ namespace ImageLabelingTool_pre.ViewModels
             if (dialog.ShowDialog() == true)
             {
                 ITiffImage.FileFullPath = dialog.FileName;
-                _ImageHeiht = ITiffImage.BitmapImage.PixelHeight;
-                _ImageWidth = ITiffImage.BitmapImage.PixelWidth;
+                _ImageHeiht = _ExpansionRate * ITiffImage.BitmapImage.PixelHeight / 100;
+                _ImageWidth = _ExpansionRate * ITiffImage.BitmapImage.PixelWidth / 100;
                 RefreshAllItems();
             } else
             {

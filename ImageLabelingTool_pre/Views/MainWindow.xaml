@@ -102,17 +102,18 @@
         
         <!-- 画像表示エリア -->
         <StackPanel DockPanel.Dock="Top" Height="50">
-            <StackPanel x:Name="ControlArea" HorizontalAlignment="Left" Height="50" Margin="0" VerticalAlignment="Top" Width="900" Orientation="Horizontal">
+            <StackPanel x:Name="ControlArea" HorizontalAlignment="Left" Height="50" Margin="0" VerticalAlignment="Top" Width="918" Orientation="Horizontal">
                 <Label Content="画像ファイル名：" HorizontalAlignment="Left" VerticalAlignment="Stretch" Height="30" Margin="10,0,0,0" Width="100" FontFamily="Meiryo UI" FontSize="14" />
                 <Label Content="{Binding FileName}" Height="30" HorizontalAlignment="Left" VerticalAlignment="Stretch" Margin="10,0,0,0" Width="300" FontFamily="Meiryo UI" FontSize="14"/>
                 <Label Content="倍率：" HorizontalAlignment="Left" VerticalAlignment="Stretch" Height="30" Margin="10,0,0,0" Width="50" FontFamily="Meiryo UI" FontSize="14" />
-                <TextBox Text="{Binding ExpansionRate, UpdateSourceTrigger=PropertyChanged}" HorizontalContentAlignment="Left" VerticalAlignment="Stretch" Height="30" Margin="10,0,0,0" Width="50" FontFamily="Meiryo UI" FontSize="14" VerticalContentAlignment="Center" />
+                <TextBox Text="{Binding Value, ElementName=ExpansionRateSlider}" HorizontalContentAlignment="Left" VerticalAlignment="Stretch" Height="30" Margin="10,0,0,0" Width="50" FontFamily="Meiryo UI" FontSize="14" VerticalContentAlignment="Center" />
+                <Slider x:Name="ExpansionRateSlider"  Width="309" VerticalAlignment="Center" Margin="0,16" Minimum="5" Maximum="300" Value="{Binding ExpansionRate}"/>
             </StackPanel>
         </StackPanel>
         <StackPanel>
-            <ScrollViewer x:Name="ImageArea" Margin="10" HorizontalAlignment="Left" VerticalAlignment="Top" MaxWidth="1500" MaxHeight="900">
-                <Image Source="{Binding BitmapImage}" Height="{Binding ImageHeiht}" Width="{Binding ImageWidth}" />
-            </ScrollViewer>      
+                <ScrollViewer x:Name="ImageArea" Margin="10" HorizontalAlignment="Left" VerticalAlignment="Top" MaxWidth="1500" MaxHeight="900" VerticalScrollBarVisibility="Visible" HorizontalScrollBarVisibility="Visible">
+                    <Image Source="{Binding BitmapImage}" Height="{Binding ImageHeiht}" Width="{Binding ImageWidth}" />
+                </ScrollViewer>
         </StackPanel>
     </DockPanel>
 </Window>
