@@ -9,7 +9,14 @@ namespace ImageLabelingTool_pre.Models
 {
     public interface ITiffImage
     {
-        string FileFullPath { get; set; }
-        BitmapImage BitmapImage { get; }
+        string BaseFileFullPath { get; set; }
+        BitmapImage DisplayImage { get; }
+        WriteableBitmap LabelImageData { get; }
+        int ClopSize { get; set; }
+
+        Boolean OpenNewImageFile();
+        Boolean OpenAttributeFile();
+        Boolean SaveAttributeFile();
+        Boolean ClopImageFile();
     }
 }

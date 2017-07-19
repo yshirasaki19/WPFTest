@@ -15,6 +15,7 @@ using Livet.Messaging.Windows;
 
 using ImageLabelingTool_pre.Models;
 using System.Collections.ObjectModel;
+using System.IO;
 
 namespace ImageLabelingTool_pre.ViewModels
 {
@@ -62,30 +63,34 @@ namespace ImageLabelingTool_pre.ViewModels
          * 自動的にUIDispatcher上での通知に変換されます。変更通知に際してUIDispatcherを操作する必要はありません。
          */
 
+        // モデル
+        private TiffImage TargetImage;
+
         public void Initialize()
         {
-            ITiffImage = new TiffImage();
+            TargetImage = new TiffImage();
             LabelAttributes = new ObservableCollection<LabelAttribute>();
             LabelAttributes.CollectionChanged += new System.Collections.Specialized.NotifyCollectionChangedEventHandler(LabelAttributes_CollectionChanged);
             LabelAttributes.Add(new LabelAttribute("属性A(下地)", 0, "#FFFFFF"));
             LabelAttributes.Add(new LabelAttribute("属性B(未設定)", 255, "#000000"));
             RaisePropertyChanged("LabelAttributes");
+            StatusMessage = "起動完了";
         }
 
 
-        #region ITiffImage変更通知プロパティ
-        private ITiffImage _ITiffImage;
+        #region StatusMessage変更通知プロパティ
+        private string _StatusMessage;
 
-        public ITiffImage ITiffImage
+        public string StatusMessage
         {
             get
-            { return _ITiffImage; }
+            { return _StatusMessage; }
             set
             { 
-                if (_ITiffImage == value)
+                if (_StatusMessage == value)
                     return;
-                _ITiffImage = value;
-                RaisePropertyChanged("ITiffImage");
+                _StatusMessage = value;
+                RaisePropertyChanged("StatusMessage");
             }
         }
         #endregion
@@ -95,7 +100,7 @@ namespace ImageLabelingTool_pre.ViewModels
 
         public string FileName
         {
-            get { return ITiffImage != null ? System.IO.Path.GetFileName(ITiffImage.FileFullPath) : null; }
+            get { return TargetImage != null ? Path.GetFileName(TargetImage.BaseFileFullPath) : null; }
             set
             { 
                 if (_FileName == value)
@@ -118,12 +123,11 @@ namespace ImageLabelingTool_pre.ViewModels
                 if (_ExpansionRate == value)
                     return;
                 _ExpansionRate = value;
-                if (ITiffImage.BitmapImage != null)
+                if (TargetImage.DisplayImage != null)
                 {
-                    _ImageHeiht = _ExpansionRate * ITiffImage.BitmapImage.PixelHeight / 100;
-                    _ImageWidth = _ExpansionRate * ITiffImage.BitmapImage.PixelWidth / 100;
-                    RaisePropertyChanged("ImageHeiht");
-                    RaisePropertyChanged("ImageWidth");
+                    _ImageHeiht = _ExpansionRate * TargetImage.DisplayImage.PixelHeight / 100;
+                    _ImageWidth = _ExpansionRate * TargetImage.DisplayImage.PixelWidth / 100;
+                    RefreshAllItems();
                 }
             }
         }
@@ -134,7 +138,7 @@ namespace ImageLabelingTool_pre.ViewModels
 
         public BitmapImage BitmapImage
         {
-            get { return ITiffImage != null ? ITiffImage.BitmapImage : null; }
+            get { return TargetImage != null ? (BitmapImage)TargetImage.DisplayImage : null; }
             set
             { 
                 if (_BitmapImage == value)
@@ -217,43 +221,169 @@ namespace ImageLabelingTool_pre.ViewModels
         }
         #endregion
 
-        /// <summary>
-        /// メニュー 新規作成
-        /// </summary>
-        #region NewTiffImageCommand
-        private ViewModelCommand _NewTiffImageCommand;
+        #region OpenNewImageFileCommand(メニュー：ファイル → 新規作成)
+        private ViewModelCommand _OpenNewImageFileCommand;
 
-        public ViewModelCommand NewTiffImageCommand
+        public ViewModelCommand OpenNewImageFileCommand
         {
             get
             {
-                if (_NewTiffImageCommand == null)
+                if (_OpenNewImageFileCommand == null)
                 {
-                    _NewTiffImageCommand = new ViewModelCommand(NewTiffImage);
+                    _OpenNewImageFileCommand = new ViewModelCommand(OpenNewImageFile);
                 }
-                return _NewTiffImageCommand;
+                return _OpenNewImageFileCommand;
             }
         }
 
-        public void NewTiffImage()
+        public void OpenNewImageFile()
         {
-            // 保存ダイアログを表示する。
-            Microsoft.Win32.OpenFileDialog dialog = new Microsoft.Win32.OpenFileDialog();
-            dialog.Title = "新規作成";
-            dialog.Filter = "Tiff Bitmap画像|*.tiff;*.tif;*.bmp";
-            if (dialog.ShowDialog() == true)
+            if (TargetImage.OpenNewImageFile())
             {
-                ITiffImage.FileFullPath = dialog.FileName;
-                _ImageHeiht = _ExpansionRate * ITiffImage.BitmapImage.PixelHeight / 100;
-                _ImageWidth = _ExpansionRate * ITiffImage.BitmapImage.PixelWidth / 100;
+                _ImageHeiht = _ExpansionRate * TargetImage.DisplayImage.PixelHeight / 100;
+                _ImageWidth = _ExpansionRate * TargetImage.DisplayImage.PixelWidth / 100;
                 RefreshAllItems();
             } else
             {
-                Messenger.Raise(new InformationMessage("キャンセルしました", "ファイル保存", System.Windows.MessageBoxImage.Information, "Info"));
+                Messenger.Raise(new InformationMessage("キャンセルしました", "新規作成", System.Windows.MessageBoxImage.Information, "Info"));
             }
         }
         #endregion
-    
+
+        #region OpenAttributeFileCommand(メニュー：ファイル → 開く)
+        private ViewModelCommand _OpenAttributeFileCommand;
+
+        public ViewModelCommand OpenAttributeFileCommand
+        {
+            get
+            {
+                if (_OpenAttributeFileCommand == null)
+                {
+                    _OpenAttributeFileCommand = new ViewModelCommand(OpenAttributeFile);
+                }
+                return _OpenAttributeFileCommand;
+            }
+        }
+
+        public void OpenAttributeFile()
+        {
+            if (TargetImage.OpenAttributeFile())
+            {
+                RefreshAllItems();
+            }
+            else
+            {
+                Messenger.Raise(new InformationMessage("キャンセルしました", "開く", System.Windows.MessageBoxImage.Information, "Info"));
+            }
+        }
+        #endregion
+
+        #region SaveAttributeFileCommand(メニュー：ファイル → 一時保存)
+        private ViewModelCommand _SaveAttributeFileCommand;
+
+        public ViewModelCommand SaveAttributeFileCommand
+        {
+            get
+            {
+                if (_SaveAttributeFileCommand == null)
+                {
+                    _SaveAttributeFileCommand = new ViewModelCommand(SaveAttributeFile);
+                }
+                return _SaveAttributeFileCommand;
+            }
+        }
+
+        public void SaveAttributeFile()
+        {
+            if (TargetImage.SaveAttributeFile())
+            {
+                RefreshAllItems();
+            }
+            else
+            {
+                Messenger.Raise(new InformationMessage("キャンセルしました", "一時保存", System.Windows.MessageBoxImage.Information, "Info"));
+            }
+        }
+        #endregion
+
+        #region ClopImageFileCommand(メニュー：ファイル → 切り出し)
+        private ViewModelCommand _ClopImageFileCommand;
+
+        public ViewModelCommand ClopImageFileCommand
+        {
+            get
+            {
+                if (_ClopImageFileCommand == null)
+                {
+                    _ClopImageFileCommand = new ViewModelCommand(ClopImageFile);
+                }
+                return _ClopImageFileCommand;
+            }
+        }
+
+        public void ClopImageFile()
+        {
+            if (TargetImage.ClopImageFile())
+            {
+                RefreshAllItems();
+            }
+            else
+            {
+                Messenger.Raise(new InformationMessage("キャンセルしました", "一時保存", System.Windows.MessageBoxImage.Information, "Info"));
+            }
+        }
+        #endregion
+
+        #region ExitApplicationCommand(メニュー：ファイル → 終了)
+        private ViewModelCommand _ExitApplicationCommand;
+
+        public ViewModelCommand ExitApplicationCommand
+        {
+            get
+            {
+                if (_ExitApplicationCommand == null)
+                {
+                    _ExitApplicationCommand = new ViewModelCommand(ExitApplication, CanExitApplication);
+                }
+                return _ExitApplicationCommand;
+            }
+        }
+
+        public bool CanExitApplication()
+        {
+            return true;
+        }
+
+        public void ExitApplication()
+        {
+            App.Current.MainWindow.Close();
+        }
+        #endregion
+
+        #region OpenClopSizeWindowCommandCommand(メニュー：設定 → 切取サイズ)
+        private ViewModelCommand _OpenClopSizeWindowCommand;
+
+        public ViewModelCommand OpenClopSizeWindowCommand
+        {
+            get
+            {
+                if (_OpenClopSizeWindowCommand == null)
+                {
+                    _OpenClopSizeWindowCommand = new ViewModelCommand(OpenClopSizeWindow);
+                }
+                return _OpenClopSizeWindowCommand;
+            }
+        }
+
+        public void OpenClopSizeWindow()
+        {
+            using (var vm = new ClopSizeWindowViewModel(this.TargetImage))
+            {
+                Messenger.Raise(new TransitionMessage(vm, "OpenClopSizeWindow"));
+            }
+        }
+        #endregion
+
         /// <summary>
         /// すべてのアイテムに更新通知を発行する。
         /// </summary>
@@ -263,6 +393,7 @@ namespace ImageLabelingTool_pre.ViewModels
             RaisePropertyChanged("FileName");
             RaisePropertyChanged("ImageHeiht");
             RaisePropertyChanged("ImageWidth");
+            RaisePropertyChanged("StatusMessage");
         }
     }
 }

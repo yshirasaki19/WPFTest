@@ -80,6 +80,7 @@
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
+    <Reference Include="System.Drawing" />
     <Reference Include="System.Windows.Interactivity">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>InfrastructureAssemblies\System.Windows.Interactivity.dll</HintPath>
@@ -101,6 +102,10 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Page Include="Views\ClopSizeWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="Views\MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
@@ -113,7 +118,12 @@
     <Compile Include="Models\LabelAttribute.cs" />
     <Compile Include="Models\ITiffImage.cs" />
     <Compile Include="Models\TiffImage.cs" />
+    <Compile Include="Utility\CheckUtility.cs" />
+    <Compile Include="ViewModels\ClopSizeWindowViewModel.cs" />
     <Compile Include="ViewModels\MainWindowViewModel.cs" />
+    <Compile Include="Views\ClopSizeWindow.xaml.cs">
+      <DependentUpon>ClopSizeWindow.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Views\MainWindow.xaml.cs">
       <DependentUpon>MainWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
@@ -137,6 +147,7 @@
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
+    <None Include="app.config" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
@@ -144,6 +155,7 @@
     <AppDesigner Include="Properties\" />
   </ItemGroup>
   <ItemGroup>
+    <Resource Include="Resources\ChangeModeImage.png" />
     <Content Include="InfrastructureAssemblies\Design\Livet.Design.dll" />
     <Content Include="InfrastructureAssemblies\Livet.dll" />
     <Content Include="InfrastructureAssemblies\Livet.XML" />

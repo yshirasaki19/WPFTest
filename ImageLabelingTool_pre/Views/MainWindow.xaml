@@ -1,4 +1,5 @@
-﻿<Window x:Class="ImageLabelingTool_pre.Views.MainWindow"
+﻿<Window Style="{StaticResource DefaultWindowStyle}"
+        x:Class="ImageLabelingTool_pre.Views.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:i="http://schemas.microsoft.com/expression/2010/interactivity"
@@ -6,7 +7,7 @@
         xmlns:l="http://schemas.livet-mvvm.net/2011/wpf"
         xmlns:v="clr-namespace:ImageLabelingTool_pre.Views"
         xmlns:vm="clr-namespace:ImageLabelingTool_pre.ViewModels"
-        Title="MainWindow" Width="1200" Height="800" >
+        Title="[図面情報抽出] 画像属性判定用学習データ作成アプリケーション" Width="1200" Height="800" FontFamily="Meiryo UI" FontSize="14" >
     <Window.DataContext>
         <vm:MainWindowViewModel/>
     </Window.DataContext>
@@ -32,6 +33,10 @@
         <l:InteractionMessageTrigger MessageKey="Info" Messenger="{Binding Messenger}" >
             <l:InformationDialogInteractionMessageAction />
         </l:InteractionMessageTrigger>
+
+        <l:InteractionMessageTrigger MessageKey="OpenClopSizeWindow" Messenger="{Binding Messenger}">
+            <l:TransitionInteractionMessageAction WindowType="{x:Type v:ClopSizeWindow}" Mode="Modal" />
+        </l:InteractionMessageTrigger>
     </i:Interaction.Triggers>
 
     <DockPanel>
@@ -39,13 +44,26 @@
         <StackPanel x:Name="MenuBarArea" DockPanel.Dock="Top"  HorizontalAlignment="Left" Height="25" Margin="10,0,10,0" VerticalAlignment="Top" Width="1180">
             <Menu FontFamily="Meiryo UI" FontSize="14" Height="25">
                 <MenuItem Header="ファイル" Width="60">
-                    <MenuItem Header="新規作成" Command="{Binding Path=NewTiffImageCommand}"/>
+                    <MenuItem Header="新規作成" Command="{Binding OpenNewImageFileCommand}"/>
+                    <MenuItem Header="開く" Command="{Binding OpenAttributeFileCommand}"/>
+                    <MenuItem Header="一時保存" Command="{Binding SaveAttributeFileCommand}"/>
+                    <MenuItem Header="切り出し" Command="{Binding ClopImageFileCommand}"/>
+                    <MenuItem Header="終了" Command="{Binding ExitApplicationCommand}"/>
                 </MenuItem>
-                <MenuItem Header="編集" Width="60"/>
-                <MenuItem Header="設定" Width="60"/>
+                <MenuItem Header="編集" Width="60">
+                </MenuItem>
+                <MenuItem Header="設定" Width="60">
+                    <MenuItem Header="切取サイズ" Command="{Binding OpenClopSizeWindowCommand}"/>
+                </MenuItem>            
             </Menu>
         </StackPanel>
-
+        <!-- ステータスバー表示 -->
+        <StackPanel DockPanel.Dock="Bottom">
+            <StatusBar Height="20" HorizontalAlignment="Stretch" Margin="0" VerticalAlignment="Bottom" >
+                <TextBlock Text="{Binding StatusMessage}" />
+            </StatusBar>
+        </StackPanel>
+        
         <!-- 属性選択表示 -->
         <StackPanel  DockPanel.Dock="Right" MaxWidth="300" Margin="10">
             <DataGrid x:Name="AttributeList"
@@ -59,7 +77,7 @@
                         VerticalAlignment="Top"
                         Margin="0,0,0,0"
                         HorizontalAlignment="Left"
-                        HorizontalScrollBarVisibility="Auto">
+                        HorizontalScrollBarVisibility="Auto" Height="705">
                 <DataGrid.Columns>
                     <DataGridTextColumn Header="属性名" Width="97" Binding="{Binding Name}">
                         <DataGridTextColumn.HeaderStyle>
@@ -99,7 +117,7 @@
                 </DataGrid.Columns>
             </DataGrid>
         </StackPanel>
-        
+
         <!-- 画像表示エリア -->
         <StackPanel DockPanel.Dock="Top" Height="50">
             <StackPanel x:Name="ControlArea" HorizontalAlignment="Left" Height="50" Margin="0" VerticalAlignment="Top" Width="918" Orientation="Horizontal">
@@ -107,13 +125,17 @@
                 <Label Content="{Binding FileName}" Height="30" HorizontalAlignment="Left" VerticalAlignment="Stretch" Margin="10,0,0,0" Width="300" FontFamily="Meiryo UI" FontSize="14"/>
                 <Label Content="倍率：" HorizontalAlignment="Left" VerticalAlignment="Stretch" Height="30" Margin="10,0,0,0" Width="50" FontFamily="Meiryo UI" FontSize="14" />
                 <TextBox Text="{Binding Value, ElementName=ExpansionRateSlider}" HorizontalContentAlignment="Left" VerticalAlignment="Stretch" Height="30" Margin="10,0,0,0" Width="50" FontFamily="Meiryo UI" FontSize="14" VerticalContentAlignment="Center" />
-                <Slider x:Name="ExpansionRateSlider"  Width="309" VerticalAlignment="Center" Margin="0,16" Minimum="5" Maximum="300" Value="{Binding ExpansionRate}"/>
+                <Slider x:Name="ExpansionRateSlider"  Width="250" VerticalAlignment="Center" Margin="0,15,0,10" Minimum="5" Maximum="300" Value="{Binding ExpansionRate}" Height="25"/>
+                <ToggleButton Width="30" Height="30" Margin="50,0,0,0" >
+                    <Image Source="../Resources/ChangeModeImage.png"/>
+                </ToggleButton>
             </StackPanel>
         </StackPanel>
         <StackPanel>
-                <ScrollViewer x:Name="ImageArea" Margin="10" HorizontalAlignment="Left" VerticalAlignment="Top" MaxWidth="1500" MaxHeight="900" VerticalScrollBarVisibility="Visible" HorizontalScrollBarVisibility="Visible">
-                    <Image Source="{Binding BitmapImage}" Height="{Binding ImageHeiht}" Width="{Binding ImageWidth}" />
-                </ScrollViewer>
+            <ScrollViewer x:Name="ImageArea" Margin="10" HorizontalAlignment="Left" VerticalAlignment="Top" MaxWidth="1500" MaxHeight="650" VerticalScrollBarVisibility="Visible" HorizontalScrollBarVisibility="Visible">
+                <Image Source="{Binding BitmapImage}" Height="{Binding ImageHeiht}" Width="{Binding ImageWidth}"/>
+            </ScrollViewer>
         </StackPanel>
+
     </DockPanel>
 </Window>
