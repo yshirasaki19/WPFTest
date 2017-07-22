@@ -4,10 +4,12 @@ using System.Linq;
 using System.Text;
 
 using Livet;
+using System.Runtime.Serialization;
 
 namespace ImageLabelingTool_pre.Models
 {
-    public class LabelAttribute : NotificationObject
+    [Serializable]
+    public class LabelAttribute : ISerializable
     {
         private string _Name;
         public string Name
@@ -30,16 +32,25 @@ namespace ImageLabelingTool_pre.Models
             set { _RGB = value; }
         }
 
-
-        public LabelAttribute()
-        {
-        }
-
         public LabelAttribute(string name, byte pixel, string rgb)
         {
             _Name = name;
             _Pixel = pixel;
             _RGB = rgb;
+        }
+
+        public LabelAttribute(SerializationInfo info, StreamingContext context)
+        {
+            _Name = info.GetString("Name");
+            _Pixel = info.GetByte("Pixel");
+            _RGB = info.GetString("RGB");
+        }
+
+        void ISerializable.GetObjectData(SerializationInfo info, StreamingContext context)
+        {
+            info.AddValue("Name", this._Name);
+            info.AddValue("Pixel", this._Pixel);
+            info.AddValue("RGB", this._RGB);
         }
     }
 }

@@ -121,4 +121,12 @@
   <data name="ChangeModeImage" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\ChangeModeImage.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
+  <data name="WINDOW_TITLE_CLOPSIZE" xml:space="preserve">
+    <value>[図面情報抽出] 切り取りサイズ設定</value>
+    <comment>切り取りサイズ入力画面のタイトル</comment>
+  </data>
+  <data name="WINDOW_TITLE_MAIN" xml:space="preserve">
+    <value>[図面情報抽出] 画像属性判定用学習データ作成アプリケーション</value>
+    <comment>メインウィンドウのタイトル</comment>
+  </data>
 </root>

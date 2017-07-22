@@ -22,7 +22,7 @@ namespace ImageLabelingTool_pre.Properties {
     [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "4.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-    internal class Resources {
+    public class Resources {
         
         private static global::System.Resources.ResourceManager resourceMan;
         
@@ -36,7 +36,7 @@ namespace ImageLabelingTool_pre.Properties {
         ///   このクラスで使用されているキャッシュされた ResourceManager インスタンスを返します。
         /// </summary>
         [global::System.ComponentModel.EditorBrowsableAttribute(global::System.ComponentModel.EditorBrowsableState.Advanced)]
-        internal static global::System.Resources.ResourceManager ResourceManager {
+        public static global::System.Resources.ResourceManager ResourceManager {
             get {
                 if (object.ReferenceEquals(resourceMan, null)) {
                     global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("ImageLabelingTool_pre.Properties.Resources", typeof(Resources).Assembly);
@@ -51,7 +51,7 @@ namespace ImageLabelingTool_pre.Properties {
         ///   現在のスレッドの CurrentUICulture プロパティをオーバーライドします。
         /// </summary>
         [global::System.ComponentModel.EditorBrowsableAttribute(global::System.ComponentModel.EditorBrowsableState.Advanced)]
-        internal static global::System.Globalization.CultureInfo Culture {
+        public static global::System.Globalization.CultureInfo Culture {
             get {
                 return resourceCulture;
             }
@@ -63,10 +63,28 @@ namespace ImageLabelingTool_pre.Properties {
         /// <summary>
         ///   型 System.Drawing.Bitmap のローカライズされたリソースを検索します。
         /// </summary>
-        internal static System.Drawing.Bitmap ChangeModeImage {
+        public static System.Drawing.Bitmap ChangeModeImage {
             get {
                 object obj = ResourceManager.GetObject("ChangeModeImage", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   [図面情報抽出] 切り取りサイズ設定 に類似しているローカライズされた文字列を検索します。
+        /// </summary>
+        public static string WINDOW_TITLE_CLOPSIZE {
+            get {
+                return ResourceManager.GetString("WINDOW_TITLE_CLOPSIZE", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   [図面情報抽出] 画像属性判定用学習データ作成アプリケーション に類似しているローカライズされた文字列を検索します。
+        /// </summary>
+        public static string WINDOW_TITLE_MAIN {
+            get {
+                return ResourceManager.GetString("WINDOW_TITLE_MAIN", resourceCulture);
             }
         }
     }

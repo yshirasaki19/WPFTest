@@ -1,21 +1,17 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.ComponentModel;
-using System.Diagnostics;
 using System.Windows.Media.Imaging;
 
 using Livet;
 using Livet.Commands;
 using Livet.Messaging;
-using Livet.Messaging.IO;
-using Livet.EventListeners;
-using Livet.Messaging.Windows;
 
 using ImageLabelingTool_pre.Models;
 using System.Collections.ObjectModel;
 using System.IO;
+using System.Windows;
+using System.Threading.Tasks;
+using System.Windows.Media;
+using System.Runtime.Serialization.Formatters.Binary;
 
 namespace ImageLabelingTool_pre.ViewModels
 {
@@ -65,18 +61,23 @@ namespace ImageLabelingTool_pre.ViewModels
 
         // モデル
         private TiffImage TargetImage;
+        private LabelAttributes TargetAttributes;
+
+        // ラベル、クロップ処理制御
+        private Boolean _CanClopAndLabeling;
+
+        // MessangerKey
+        private readonly string MESSENGER_KEY_OPEN_INFO = "OpenInfoDialog";
+        private readonly string MESSENGER_KEY_OPEN_CONFIRM = "OpenConfirmDialog";
+        private readonly string MESSENGER_KEY_OPEN_MODAL = "OpenClopSizeWindow";
 
         public void Initialize()
         {
-            TargetImage = new TiffImage();
-            LabelAttributes = new ObservableCollection<LabelAttribute>();
-            LabelAttributes.CollectionChanged += new System.Collections.Specialized.NotifyCollectionChangedEventHandler(LabelAttributes_CollectionChanged);
-            LabelAttributes.Add(new LabelAttribute("属性A(下地)", 0, "#FFFFFF"));
-            LabelAttributes.Add(new LabelAttribute("属性B(未設定)", 255, "#000000"));
-            RaisePropertyChanged("LabelAttributes");
+            this.TargetImage = new TiffImage();
+            TargetAttributes = new LabelAttributes();
+            this.LabelAttributes = TargetAttributes.Attributes;
             StatusMessage = "起動完了";
         }
-
 
         #region StatusMessage変更通知プロパティ
         private string _StatusMessage;
@@ -127,7 +128,7 @@ namespace ImageLabelingTool_pre.ViewModels
                 {
                     _ImageHeiht = _ExpansionRate * TargetImage.DisplayImage.PixelHeight / 100;
                     _ImageWidth = _ExpansionRate * TargetImage.DisplayImage.PixelWidth / 100;
-                    RefreshAllItems();
+                    RaiseAllPropertyChanged();
                 }
             }
         }
@@ -185,7 +186,7 @@ namespace ImageLabelingTool_pre.ViewModels
 
         #region LabelAttribute変更通知プロパティ
         private LabelAttribute _LabelAttribute;
-
+            
         public LabelAttribute LabelAttribute
         {
             get
@@ -196,6 +197,23 @@ namespace ImageLabelingTool_pre.ViewModels
                     return;
                 _LabelAttribute = value;
                 RaisePropertyChanged("LabelAttribute");
+            }
+        }
+        #endregion
+
+        #region SelectedLabelAttribute変更通知プロパティ
+        private LabelAttribute _SelectedLabelAttribute;
+
+        public LabelAttribute SelectedLabelAttribute
+        {
+            get
+            { return _SelectedLabelAttribute; }
+            set
+            { 
+                if (_SelectedLabelAttribute == value)
+                    return;
+                _SelectedLabelAttribute = value;
+                RaisePropertyChanged("SelectedLabelAttribute");
             }
         }
         #endregion
@@ -214,16 +232,10 @@ namespace ImageLabelingTool_pre.ViewModels
                 RaisePropertyChanged("LabelAttributes");
             }
         }
-
-        void LabelAttributes_CollectionChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
-        {
-            RaisePropertyChanged("LabelAttributes");
-        }
         #endregion
 
         #region OpenNewImageFileCommand(メニュー：ファイル → 新規作成)
         private ViewModelCommand _OpenNewImageFileCommand;
-
         public ViewModelCommand OpenNewImageFileCommand
         {
             get
@@ -238,21 +250,42 @@ namespace ImageLabelingTool_pre.ViewModels
 
         public void OpenNewImageFile()
         {
-            if (TargetImage.OpenNewImageFile())
+            string message = "";
+
+            // 処理中である場合は、破棄確認のメッセージを表示する。
+            if (TargetImage !=null && TargetImage.DisplayImage != null)
             {
+                message = "現在編集中の情報が破棄されますが、新規にファイルを取込ますか？";
+                ConfirmationMessage confirmMessage = new ConfirmationMessage(message, "新規作成", MessageBoxImage.Question, MessageBoxButton.YesNo, MESSENGER_KEY_OPEN_CONFIRM);
+                Messenger.Raise(confirmMessage);
+                if (!(confirmMessage.Response.HasValue && confirmMessage.Response.Value))
+                {
+                    return;
+                }
+            }
+
+            // 画像ファイルを開き、初期値を画面項目に値を反映する。
+            if (TargetImage.OpenNewImageFile(ref message))
+            {
+                // 属性情報は前回起動時の情報を取得
+                TargetAttributes.ReadSerializeData();
+
+                // 画面情報を更新
                 _ImageHeiht = _ExpansionRate * TargetImage.DisplayImage.PixelHeight / 100;
                 _ImageWidth = _ExpansionRate * TargetImage.DisplayImage.PixelWidth / 100;
-                RefreshAllItems();
-            } else
-            {
-                Messenger.Raise(new InformationMessage("キャンセルしました", "新規作成", System.Windows.MessageBoxImage.Information, "Info"));
+                _rectH = TargetImage.DisplayImage.PixelHeight;      // 暫定(矩形選択実装後は不要)
+                _rectW = TargetImage.DisplayImage.PixelWidth;       // 暫定(矩形選択実装後は不要)
+                _CanClopAndLabeling = true;
+                StatusMessage = "画像表示完了";
+                RaiseAllPropertyChanged();
             }
+            else
+                Messenger.Raise(new InformationMessage(message, "エラー", MessageBoxImage.Exclamation, MESSENGER_KEY_OPEN_INFO));
         }
         #endregion
 
         #region OpenAttributeFileCommand(メニュー：ファイル → 開く)
         private ViewModelCommand _OpenAttributeFileCommand;
-
         public ViewModelCommand OpenAttributeFileCommand
         {
             get
@@ -267,102 +300,127 @@ namespace ImageLabelingTool_pre.ViewModels
 
         public void OpenAttributeFile()
         {
-            if (TargetImage.OpenAttributeFile())
+            string message = "";
+
+            // 処理中である場合は、破棄確認のメッセージを表示する。
+            if (TargetImage != null && TargetImage.DisplayImage != null)
             {
-                RefreshAllItems();
+                message = "現在編集中の情報が破棄されますが、ファイルを開きますか？";
+                ConfirmationMessage confirmMessage = new ConfirmationMessage(message, "開く", MessageBoxImage.Question, MessageBoxButton.YesNo, MESSENGER_KEY_OPEN_CONFIRM);
+                Messenger.Raise(confirmMessage);
+                if (!(confirmMessage.Response.HasValue && confirmMessage.Response.Value))
+                {
+                    return;
+                }
+            }
+
+            // 設定ファイルを開く。成功するとラベル、クロップが可能となる。
+            if (TargetImage.OpenAttributeFile(ref message, ref TargetAttributes))
+            {
+                // 画面情報を更新
+                _ImageHeiht = _ExpansionRate * TargetImage.DisplayImage.PixelHeight / 100;
+                _ImageWidth = _ExpansionRate * TargetImage.DisplayImage.PixelWidth / 100;
+                _rectH = TargetImage.DisplayImage.PixelHeight;      // 暫定(矩形選択実装後は不要)
+                _rectW = TargetImage.DisplayImage.PixelWidth;       // 暫定(矩形選択実装後は不要)
+                _CanClopAndLabeling = true;
+                StatusMessage = "画像表示完了";
+                RaiseAllPropertyChanged();
             }
             else
-            {
-                Messenger.Raise(new InformationMessage("キャンセルしました", "開く", System.Windows.MessageBoxImage.Information, "Info"));
-            }
+                Messenger.Raise(new InformationMessage(message, "エラー", MessageBoxImage.Exclamation, MESSENGER_KEY_OPEN_INFO));
+
+            RaiseAllPropertyChanged();
         }
         #endregion
 
-        #region SaveAttributeFileCommand(メニュー：ファイル → 一時保存)
-        private ViewModelCommand _SaveAttributeFileCommand;
-
-        public ViewModelCommand SaveAttributeFileCommand
+        #region SaveFileCommand(メニュー：ファイル → 保存)
+        private ViewModelCommand _SaveFileCommand;
+        public ViewModelCommand SaveFileCommand
         {
             get
             {
-                if (_SaveAttributeFileCommand == null)
+                if (_SaveFileCommand == null)
                 {
-                    _SaveAttributeFileCommand = new ViewModelCommand(SaveAttributeFile);
+                    _SaveFileCommand = new ViewModelCommand(SaveFile, CanSaveFile);
                 }
-                return _SaveAttributeFileCommand;
+                return _SaveFileCommand;
             }
         }
 
-        public void SaveAttributeFile()
+        public bool CanSaveFile()
         {
-            if (TargetImage.SaveAttributeFile())
-            {
-                RefreshAllItems();
-            }
+            if (TargetImage == null || TargetImage.LabelImageData == null)
+                return false;
             else
+                return true;
+        }
+        public void SaveFile()
+        {
+            if (TargetImage.SaveImageFile(TargetAttributes))
             {
-                Messenger.Raise(new InformationMessage("キャンセルしました", "一時保存", System.Windows.MessageBoxImage.Information, "Info"));
+                StatusMessage = "保存完了";
+                RaiseAllPropertyChanged();
             }
         }
         #endregion
 
         #region ClopImageFileCommand(メニュー：ファイル → 切り出し)
         private ViewModelCommand _ClopImageFileCommand;
-
         public ViewModelCommand ClopImageFileCommand
         {
             get
             {
                 if (_ClopImageFileCommand == null)
                 {
-                    _ClopImageFileCommand = new ViewModelCommand(ClopImageFile);
+                    _ClopImageFileCommand = new ViewModelCommand(ClopImageFile, CanClopImageFile);
                 }
                 return _ClopImageFileCommand;
             }
+        }
+
+        public bool CanClopImageFile()
+        {
+            if (TargetImage == null || TargetImage.LabelImageData == null)
+                return false;
+            else if (!_CanClopAndLabeling)
+                return false;
+            else
+                return true;
         }
 
         public void ClopImageFile()
         {
             if (TargetImage.ClopImageFile())
             {
-                RefreshAllItems();
-            }
-            else
-            {
-                Messenger.Raise(new InformationMessage("キャンセルしました", "一時保存", System.Windows.MessageBoxImage.Information, "Info"));
+                
             }
         }
         #endregion
 
         #region ExitApplicationCommand(メニュー：ファイル → 終了)
         private ViewModelCommand _ExitApplicationCommand;
-
         public ViewModelCommand ExitApplicationCommand
         {
             get
             {
                 if (_ExitApplicationCommand == null)
                 {
-                    _ExitApplicationCommand = new ViewModelCommand(ExitApplication, CanExitApplication);
+                    _ExitApplicationCommand = new ViewModelCommand(ExitApplication);
                 }
                 return _ExitApplicationCommand;
             }
         }
 
-        public bool CanExitApplication()
-        {
-            return true;
-        }
-
         public void ExitApplication()
         {
+            // 次回実行用に属性の値を保持する。
+            TargetAttributes.CreateSerializeData();
             App.Current.MainWindow.Close();
         }
         #endregion
 
         #region OpenClopSizeWindowCommandCommand(メニュー：設定 → 切取サイズ)
         private ViewModelCommand _OpenClopSizeWindowCommand;
-
         public ViewModelCommand OpenClopSizeWindowCommand
         {
             get
@@ -379,21 +437,167 @@ namespace ImageLabelingTool_pre.ViewModels
         {
             using (var vm = new ClopSizeWindowViewModel(this.TargetImage))
             {
-                Messenger.Raise(new TransitionMessage(vm, "OpenClopSizeWindow"));
+                Messenger.Raise(new TransitionMessage(vm, MESSENGER_KEY_OPEN_MODAL));
             }
+        }
+        #endregion
+
+        #region LabelingCommand(画面選択)
+        private ViewModelCommand _LabelingCommand;
+        public ViewModelCommand LabelingCommand
+        {
+            get
+            {
+                if (_LabelingCommand == null)
+                {
+                    _LabelingCommand = new ViewModelCommand(Labeling, CanLabeling);
+                }
+                return _LabelingCommand;
+            }
+        }
+
+        public bool CanLabeling()
+        {
+            if (TargetImage == null || TargetImage.LabelImageData == null)
+                return false;
+            else if (!_CanClopAndLabeling)
+                return false;
+            else
+                return true;
+        }
+
+        public async void Labeling()
+        {
+            Boolean result = true;
+            String stackTrace = "";
+
+            // ラベル処理中は再実行不可、ステータスバーに通知
+            _StatusMessage = "ラベリング処理中…";
+            _CanClopAndLabeling = false;
+            RaiseAllPropertyChanged();
+
+            // ラベリングはUIとは別のスレッドで実施する。
+            Func<Task> act = async () =>
+            {
+                try
+                {
+                    Int32Rect area = new Int32Rect(rectX, rectY, rectW, rectH);
+                    byte label = _SelectedLabelAttribute.Pixel;
+                    Color disp =  (Color)(ColorConverter.ConvertFromString(_SelectedLabelAttribute.RGB));
+                    result = TargetImage.LabelingImage(area, label, disp);
+                }
+                catch (Exception e)
+                {
+                    stackTrace = e.StackTrace; 
+                }
+                await Task.Delay(1000);
+            };
+            await act();
+            
+            if (!result)
+                Messenger.Raise(new InformationMessage("例外発生:\n" + stackTrace, "ラベリング処理", System.Windows.MessageBoxImage.Warning, MESSENGER_KEY_OPEN_INFO));
+
+            // ラベル処理完了
+            _StatusMessage = "ラベリング完了";
+            _CanClopAndLabeling = true;
+            RaiseAllPropertyChanged();
         }
         #endregion
 
         /// <summary>
         /// すべてのアイテムに更新通知を発行する。
         /// </summary>
-        public void RefreshAllItems()
+        public void RaiseAllPropertyChanged()
         {
             RaisePropertyChanged("BitmapImage");
             RaisePropertyChanged("FileName");
             RaisePropertyChanged("ImageHeiht");
             RaisePropertyChanged("ImageWidth");
+            RaisePropertyChanged("LabelAttribute");
+            RaisePropertyChanged("LabelAttributes");
             RaisePropertyChanged("StatusMessage");
+            SaveFileCommand.RaiseCanExecuteChanged();
+            ClopImageFileCommand.RaiseCanExecuteChanged();
+            LabelingCommand.RaiseCanExecuteChanged();
+
+            RaisePropertyChanged("rectX");
+            RaisePropertyChanged("rectY");
+            RaisePropertyChanged("rectW");
+            RaisePropertyChanged("rectH");
         }
+
+        #region 矩形選択ができるまでの暫定コード
+        
+        #region rectX変更通知プロパティ
+        private int _rectX;
+
+        public int rectX
+        {
+            get
+            { return _rectX; }
+            set
+            { 
+                if (_rectX == value)
+                    return;
+                _rectX = value;
+                RaisePropertyChanged();
+            }
+        }
+        #endregion
+
+
+        #region rectY変更通知プロパティ
+        private int _rectY;
+
+        public int rectY
+        {
+            get
+            { return _rectY; }
+            set
+            { 
+                if (_rectY == value)
+                    return;
+                _rectY = value;
+                RaisePropertyChanged();
+            }
+        }
+        #endregion
+
+
+        #region rectW変更通知プロパティ
+        private int _rectW;
+
+        public int rectW
+        {
+            get
+            { return _rectW; }
+            set
+            { 
+                if (_rectW == value)
+                    return;
+                _rectW = value;
+                RaisePropertyChanged();
+            }
+        }
+        #endregion
+
+
+        #region rectH変更通知プロパティ
+        private int _rectH;
+
+        public int rectH
+        {
+            get
+            { return _rectH; }
+            set
+            { 
+                if (_rectH == value)
+                    return;
+                _rectH = value;
+                RaisePropertyChanged();
+            }
+        }
+        #endregion
+        #endregion
     }
 }

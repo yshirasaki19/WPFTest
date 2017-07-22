@@ -16,7 +16,7 @@ using ImageLabelingTool_pre.Utility;
 
 namespace ImageLabelingTool_pre.ViewModels
 {
-    public class ClopSizeWindowViewModel : ViewModel, IDataErrorInfo
+    public class ClopSizeWindowViewModel : ViewModel
     {
         /* コマンド、プロパティの定義にはそれぞれ 
          * 
@@ -61,11 +61,11 @@ namespace ImageLabelingTool_pre.ViewModels
          */
 
         private TiffImage tiffImage;
-        private Dictionary<string, string> errors = new Dictionary<string, string>();
 
         public ClopSizeWindowViewModel(TiffImage tiffImage)
         {
             this.tiffImage = tiffImage;
+            _ClopSize = tiffImage.ClopSize.ToString();
         }
 
         public void Initialize()
@@ -89,7 +89,6 @@ namespace ImageLabelingTool_pre.ViewModels
         }
         #endregion
 
-
         #region OkCommand
         private ViewModelCommand _OkCommand;
 
@@ -108,17 +107,17 @@ namespace ImageLabelingTool_pre.ViewModels
         public void Ok()
         {
             // Validation
-            if (CheckUtility.CheckClopCutSize(_ClopSize, this.tiffImage.ClopSize))
+            if (ToolUtility.CheckClopCutSize(_ClopSize))
             {
+                this.tiffImage.ClopSize = int.Parse(_ClopSize);
                 Messenger.Raise(new WindowActionMessage(WindowAction.Close, "Close"));
             }
             else
             {
-                
+                Messenger.Raise(new InformationMessage("切り取りサイズは32以上、128以下の半角数値で入力してください", "開く", System.Windows.MessageBoxImage.Exclamation, "OpenPopupWindow"));
             }
         }
         #endregion
-
 
         #region CancelCommand
         private ViewModelCommand _CancelCommand;
@@ -140,23 +139,5 @@ namespace ImageLabelingTool_pre.ViewModels
             Messenger.Raise(new WindowActionMessage(WindowAction.Close, "Close"));
         }
         #endregion
-
-
-        public string this[string columnName]
-        {
-            get
-            {
-                if(this.errors.ContainsKey(columnName))
-                {
-                    return this.errors[columnName];
-                }
-                return null;
-            }
-        }
-
-        public string Error
-        {
-            get { throw new NotImplementedException(); }
-        }
     }
 }

@@ -7,7 +7,8 @@
         xmlns:l="http://schemas.livet-mvvm.net/2011/wpf"
         xmlns:v="clr-namespace:ImageLabelingTool_pre.Views"
         xmlns:vm="clr-namespace:ImageLabelingTool_pre.ViewModels"
-        Title="[図面情報抽出] 切り取りサイズ設定" Height="165" Width="320" FontFamily="Meiryo UI" FontSize="14" >
+        xmlns:properties="clr-namespace:ImageLabelingTool_pre.Properties"
+        Title="{x:Static properties:Resources.WINDOW_TITLE_CLOPSIZE}" Height="180" Width="320" FontFamily="Meiryo UI" FontSize="14" >
 
     <i:Interaction.Triggers>
 
@@ -25,11 +26,15 @@
             <l:DataContextDisposeAction/>
         </i:EventTrigger>
         
+        <!--WindowのCloseキャンセル処理に対応する場合は、WindowCloseCancelBehaviorの使用を検討してください-->
+
         <l:InteractionMessageTrigger MessageKey="Close" Messenger="{Binding Messenger}">
             <l:WindowInteractionMessageAction InvokeActionOnlyWhenWindowIsActive="False" />
         </l:InteractionMessageTrigger>
-        <!--WindowのCloseキャンセル処理に対応する場合は、WindowCloseCancelBehaviorの使用を検討してください-->
 
+        <l:InteractionMessageTrigger MessageKey="OpenPopupWindow" Messenger="{Binding Messenger}" >
+            <l:InformationDialogInteractionMessageAction />
+        </l:InteractionMessageTrigger>
     </i:Interaction.Triggers>
 
     <DockPanel>

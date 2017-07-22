@@ -4,6 +4,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Media.Imaging;
+using System.Windows;
+using System.Windows.Media;
 
 namespace ImageLabelingTool_pre.Models
 {
@@ -14,9 +16,10 @@ namespace ImageLabelingTool_pre.Models
         WriteableBitmap LabelImageData { get; }
         int ClopSize { get; set; }
 
-        Boolean OpenNewImageFile();
-        Boolean OpenAttributeFile();
-        Boolean SaveAttributeFile();
+        Boolean OpenNewImageFile(ref string message);
+        Boolean OpenAttributeFile(ref string message, ref LabelAttributes attr);
+        Boolean SaveImageFile(LabelAttributes labelAttributes);
         Boolean ClopImageFile();
+        Boolean LabelingImage(Int32Rect area, byte label, Color disp);
     }
 }

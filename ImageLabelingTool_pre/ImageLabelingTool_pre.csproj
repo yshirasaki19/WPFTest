@@ -58,6 +58,7 @@
     <ErrorReport>prompt</ErrorReport>
     <CodeAnalysisRuleSet>ManagedMinimumRules.ruleset</CodeAnalysisRuleSet>
     <Prefer32Bit>true</Prefer32Bit>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|AnyCPU'">
     <OutputPath>bin\Release\</OutputPath>
@@ -68,6 +69,7 @@
     <ErrorReport>prompt</ErrorReport>
     <CodeAnalysisRuleSet>ManagedMinimumRules.ruleset</CodeAnalysisRuleSet>
     <Prefer32Bit>true</Prefer32Bit>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Livet">
@@ -117,8 +119,9 @@
     <Compile Include="Models\AbstractTiffImage.cs" />
     <Compile Include="Models\LabelAttribute.cs" />
     <Compile Include="Models\ITiffImage.cs" />
+    <Compile Include="Models\LabelAttributes.cs" />
     <Compile Include="Models\TiffImage.cs" />
-    <Compile Include="Utility\CheckUtility.cs" />
+    <Compile Include="Utility\ToolUtility.cs" />
     <Compile Include="ViewModels\ClopSizeWindowViewModel.cs" />
     <Compile Include="ViewModels\MainWindowViewModel.cs" />
     <Compile Include="Views\ClopSizeWindow.xaml.cs">
@@ -144,7 +147,7 @@
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
     <EmbeddedResource Include="Properties\Resources.resx">
-      <Generator>ResXFileCodeGenerator</Generator>
+      <Generator>PublicResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
     <None Include="app.config" />

@@ -7,13 +7,13 @@
         xmlns:l="http://schemas.livet-mvvm.net/2011/wpf"
         xmlns:v="clr-namespace:ImageLabelingTool_pre.Views"
         xmlns:vm="clr-namespace:ImageLabelingTool_pre.ViewModels"
-        Title="[図面情報抽出] 画像属性判定用学習データ作成アプリケーション" Width="1200" Height="800" FontFamily="Meiryo UI" FontSize="14" >
+        xmlns:properties="clr-namespace:ImageLabelingTool_pre.Properties"
+        Title="{x:Static properties:Resources.WINDOW_TITLE_MAIN}" Width="1200" Height="700" FontFamily="Meiryo UI" FontSize="14" >
     <Window.DataContext>
         <vm:MainWindowViewModel/>
     </Window.DataContext>
 
     <i:Interaction.Triggers>
-
         <!--Viewに特別な要件が存在しない限りは、トリガーやアクションの自作にこだわらず積極的にコードビハインドを使いましょう -->
         <!--Viewのコードビハインドは、基本的にView内で完結するロジックとViewModelからのイベントの受信(専用リスナを使用する)に限るとトラブルが少なくなります -->
         <!--Livet1.1からはコードビハインドでViewModelのイベントを受信するためのWeakEventLisnterサポートが追加されています -->
@@ -30,54 +30,105 @@
 
         <!--WindowのCloseキャンセル処理に対応する場合は、WindowCloseCancelBehaviorの使用を検討してください-->
 
-        <l:InteractionMessageTrigger MessageKey="Info" Messenger="{Binding Messenger}" >
+        <l:InteractionMessageTrigger MessageKey="OpenInfoDialog" Messenger="{Binding Messenger}" >
             <l:InformationDialogInteractionMessageAction />
+        </l:InteractionMessageTrigger>
+
+        <l:InteractionMessageTrigger MessageKey="OpenConfirmDialog" Messenger="{Binding Messenger}" >
+            <l:ConfirmationDialogInteractionMessageAction />
         </l:InteractionMessageTrigger>
 
         <l:InteractionMessageTrigger MessageKey="OpenClopSizeWindow" Messenger="{Binding Messenger}">
             <l:TransitionInteractionMessageAction WindowType="{x:Type v:ClopSizeWindow}" Mode="Modal" />
         </l:InteractionMessageTrigger>
     </i:Interaction.Triggers>
-
+    
     <DockPanel>
         <!-- メニュー表示 -->
-        <StackPanel x:Name="MenuBarArea" DockPanel.Dock="Top"  HorizontalAlignment="Left" Height="25" Margin="10,0,10,0" VerticalAlignment="Top" Width="1180">
-            <Menu FontFamily="Meiryo UI" FontSize="14" Height="25">
-                <MenuItem Header="ファイル" Width="60">
-                    <MenuItem Header="新規作成" Command="{Binding OpenNewImageFileCommand}"/>
-                    <MenuItem Header="開く" Command="{Binding OpenAttributeFileCommand}"/>
-                    <MenuItem Header="一時保存" Command="{Binding SaveAttributeFileCommand}"/>
-                    <MenuItem Header="切り出し" Command="{Binding ClopImageFileCommand}"/>
-                    <MenuItem Header="終了" Command="{Binding ExitApplicationCommand}"/>
-                </MenuItem>
-                <MenuItem Header="編集" Width="60">
-                </MenuItem>
-                <MenuItem Header="設定" Width="60">
-                    <MenuItem Header="切取サイズ" Command="{Binding OpenClopSizeWindowCommand}"/>
-                </MenuItem>            
-            </Menu>
-        </StackPanel>
-        <!-- ステータスバー表示 -->
-        <StackPanel DockPanel.Dock="Bottom">
-            <StatusBar Height="20" HorizontalAlignment="Stretch" Margin="0" VerticalAlignment="Bottom" >
-                <TextBlock Text="{Binding StatusMessage}" />
-            </StatusBar>
-        </StackPanel>
+        <Menu DockPanel.Dock="Top" FontFamily="Meiryo UI" FontSize="14">
+            <MenuItem Header="ファイル" Width="60">
+                <MenuItem Header="新規作成" Command="{Binding OpenNewImageFileCommand}"/>
+                <MenuItem Header="開く" Command="{Binding OpenAttributeFileCommand}"/>
+                <MenuItem Header="保存" Command="{Binding SaveFileCommand}"/>
+                <MenuItem Header="切り出し" Command="{Binding ClopImageFileCommand}"/>
+                <MenuItem Header="終了" Command="{Binding ExitApplicationCommand}"/>
+            </MenuItem>
+            <MenuItem Header="編集" Width="60">
+            </MenuItem>
+            <MenuItem Header="設定" Width="60">
+                <MenuItem Header="切取サイズ" Command="{Binding OpenClopSizeWindowCommand}"/>
+            </MenuItem>
+        </Menu>
         
-        <!-- 属性選択表示 -->
-        <StackPanel  DockPanel.Dock="Right" MaxWidth="300" Margin="10">
+        <!-- ステータスバー表示 -->
+        <StatusBar DockPanel.Dock="Bottom" HorizontalAlignment="Stretch" Margin="0" VerticalAlignment="Bottom">
+            <TextBlock Text="{Binding StatusMessage}" />
+        </StatusBar>
+        
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="0.75*" />
+                <ColumnDefinition Width="0.25*" />
+            </Grid.ColumnDefinitions>
+            
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="0.1*" />
+                    <RowDefinition Height="0.8*" />
+                    <RowDefinition Height="0.1*" />
+                </Grid.RowDefinitions>
+                
+                <!-- 画像情報、操作エリア -->
+                <StackPanel x:Name="ControlArea"  HorizontalAlignment="Left" Margin="0" VerticalAlignment="Top" Orientation="Horizontal">
+                    <Label Content="画像ファイル名：" HorizontalAlignment="Left" VerticalAlignment="Stretch" Height="30" Margin="10,0,0,0" Width="100" />
+                    <Label Content="{Binding FileName}" Height="30" HorizontalAlignment="Left" VerticalAlignment="Stretch" Margin="10,0,0,0" Width="300" />
+                    <Label Content="倍率：" HorizontalAlignment="Left" VerticalAlignment="Stretch" Height="30" Margin="10,0,0,0" Width="50"/>
+                    <TextBox Text="{Binding Value, ElementName=ExpansionRateSlider}" HorizontalContentAlignment="Left" VerticalAlignment="Stretch" Height="30" Margin="10,0,0,0" Width="50" VerticalContentAlignment="Center" />
+                    <Slider x:Name="ExpansionRateSlider"  Width="250" VerticalAlignment="Center" Margin="0,15,0,10" Minimum="5" Maximum="800" Value="{Binding ExpansionRate}" Height="25"/>
+                    <ToggleButton Width="30" Height="30" Margin="50,0,0,0" >
+                        <Image Source="../Resources/ChangeModeImage.png"/>
+                    </ToggleButton>
+                </StackPanel>
+
+                <!-- 画像表示エリア -->
+                <ScrollViewer x:Name="ImageArea" Grid.Row="1" Margin="10" HorizontalAlignment="Left" VerticalAlignment="Top" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+                    <Image Source="{Binding BitmapImage}" Height="{Binding ImageHeiht}" Width="{Binding ImageWidth}"/>
+                </ScrollViewer>
+
+                <!-- 矩形選択ができないので一時しのぎ用サイズ入力エリア -->
+                <StackPanel Grid.Row="2" Orientation="Horizontal">
+                    <Label Content="X:" VerticalAlignment="Center" />
+                    <TextBox x:Name="rectX" Width="50" Height="30" Text="{Binding rectX}"/>
+                    <Label Content="Y:" VerticalAlignment="Center" />
+                    <TextBox x:Name="rectY" Width="50" Height="30" Text="{Binding rectY}"/>
+                    <Label Content="Width:" VerticalAlignment="Center" />
+                    <TextBox x:Name="rectW" Width="50" Height="30" Text="{Binding rectW}"/>
+                    <Label Content="Heigth:" VerticalAlignment="Center" />
+                    <TextBox x:Name="rectH" Width="50" Height="30" Text="{Binding rectH}"/>
+                    <Label Content="selectedPixel:" VerticalAlignment="Center" />
+                    <TextBox x:Name="selectedPixel" Width="50" Height="30" Text="{Binding SelectedLabelAttribute.Pixel}"/>
+                    <Label Content="SelectedColor:" VerticalAlignment="Center" />
+                    <TextBox x:Name="selectedColor" Width="100" Height="30" Text="{Binding SelectedLabelAttribute.RGB}"/>
+                    <Button Content="ラベル" Width="50" Height="30" Margin="30,0,0,0" Command="{Binding LabelingCommand}" />
+                </StackPanel>
+            </Grid>
+            
+            <!-- 属性選択表示 -->
             <DataGrid x:Name="AttributeList"
-                        AutoGenerateColumns="False"
-                        ItemsSource="{Binding LabelAttributes}"
-                        SelectionMode="Single"
-                        SelectionUnit="FullRow"
-                        RowHeight="25"
-                        FontFamily="Meiryo UI"
-                        FontSize="14"
-                        VerticalAlignment="Top"
-                        Margin="0,0,0,0"
-                        HorizontalAlignment="Left"
-                        HorizontalScrollBarVisibility="Auto" Height="705">
+                      Grid.Column="1"
+                      AutoGenerateColumns="False"
+                      ItemsSource="{Binding LabelAttributes}"
+                      SelectedItem="{Binding SelectedLabelAttribute}"
+                      SelectionMode="Single"
+                      SelectionUnit="FullRow"
+                      RowHeight="25"
+                      FontFamily="Meiryo UI"
+                      FontSize="14"
+                      VerticalAlignment="Top"
+                      Margin="20,0,0,0"
+                      HorizontalAlignment="Stretch"
+                      HorizontalScrollBarVisibility="Auto"
+                      IsReadOnly="False">
                 <DataGrid.Columns>
                     <DataGridTextColumn Header="属性名" Width="97" Binding="{Binding Name}">
                         <DataGridTextColumn.HeaderStyle>
@@ -115,27 +166,7 @@
                         </DataGridTextColumn.CellStyle>
                     </DataGridTextColumn>
                 </DataGrid.Columns>
-            </DataGrid>
-        </StackPanel>
-
-        <!-- 画像表示エリア -->
-        <StackPanel DockPanel.Dock="Top" Height="50">
-            <StackPanel x:Name="ControlArea" HorizontalAlignment="Left" Height="50" Margin="0" VerticalAlignment="Top" Width="918" Orientation="Horizontal">
-                <Label Content="画像ファイル名：" HorizontalAlignment="Left" VerticalAlignment="Stretch" Height="30" Margin="10,0,0,0" Width="100" FontFamily="Meiryo UI" FontSize="14" />
-                <Label Content="{Binding FileName}" Height="30" HorizontalAlignment="Left" VerticalAlignment="Stretch" Margin="10,0,0,0" Width="300" FontFamily="Meiryo UI" FontSize="14"/>
-                <Label Content="倍率：" HorizontalAlignment="Left" VerticalAlignment="Stretch" Height="30" Margin="10,0,0,0" Width="50" FontFamily="Meiryo UI" FontSize="14" />
-                <TextBox Text="{Binding Value, ElementName=ExpansionRateSlider}" HorizontalContentAlignment="Left" VerticalAlignment="Stretch" Height="30" Margin="10,0,0,0" Width="50" FontFamily="Meiryo UI" FontSize="14" VerticalContentAlignment="Center" />
-                <Slider x:Name="ExpansionRateSlider"  Width="250" VerticalAlignment="Center" Margin="0,15,0,10" Minimum="5" Maximum="300" Value="{Binding ExpansionRate}" Height="25"/>
-                <ToggleButton Width="30" Height="30" Margin="50,0,0,0" >
-                    <Image Source="../Resources/ChangeModeImage.png"/>
-                </ToggleButton>
-            </StackPanel>
-        </StackPanel>
-        <StackPanel>
-            <ScrollViewer x:Name="ImageArea" Margin="10" HorizontalAlignment="Left" VerticalAlignment="Top" MaxWidth="1500" MaxHeight="650" VerticalScrollBarVisibility="Visible" HorizontalScrollBarVisibility="Visible">
-                <Image Source="{Binding BitmapImage}" Height="{Binding ImageHeiht}" Width="{Binding ImageWidth}"/>
-            </ScrollViewer>
-        </StackPanel>
-
+            </DataGrid>           
+        </Grid>
     </DockPanel>
 </Window>
